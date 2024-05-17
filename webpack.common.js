@@ -12,7 +12,7 @@ module.exports = {
     cursorApp: path.join(srcDir, 'cursorApp.tsx'),
   },
   output: {
-    path: path.join(__dirname, '../dist/js'),
+    path: path.join(__dirname, 'dist/js'),
     filename: '[name].js',
   },
   // optimization: {

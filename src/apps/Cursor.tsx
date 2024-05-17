@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
 import '../sharedstyles/animations.css'
 
 const Cursor = () => {
@@ -6,6 +7,8 @@ const Cursor = () => {
   const [radius, setRadius] = useState(80)
   const [mouseY, setMouseY] = useState(0)
   const [mouseDown, setMouseDown] = useState(false)
+  const [cursorColor, setCursorColor] = useState<ColorsEnum>(ColorsEnum.GREEN)
+  const [cursorType, setCursorType] = useState<CursorTypeEnum>(CursorTypeEnum.DOUBLE)
 
   const handleMouseMove = (e: MouseEvent) => {
     console.log('mousemove', e.clientX, e.clientY)
@@ -40,6 +43,16 @@ const Cursor = () => {
     window.addEventListener('mousedown', handleMouseDown)
     window.addEventListener('mouseup', handleMouseUp)
     window.addEventListener('closeCursorAppEvent', handleCloseAppEvent, false)
+    // @ts-ignore
+    if(window.cursorAppSettings && window.cursorAppSettings.cursorType) {
+      // @ts-ignore
+      setCursorType(window.cursorAppSettings.cursorType)
+    }
+    // @ts-ignore
+    if(window.cursorAppSettings && window.cursorAppSettings.cursorColor) {
+      // @ts-ignore
+      setCursorColor(window.cursorAppSettings.cursorColor)
+    }
   }, [])
 
   return (
@@ -61,10 +74,10 @@ const Cursor = () => {
         style={{
           pointerEvents: 'none',
           position: 'fixed',
-          background: mouseDown ? 'rgba(34,197,94,0.3)' : 'transparent',
+          // background: mouseDown ? 'rgba(34,197,94,0.3)' : 'transparent',
           transform: mouseDown ? 'scale(0.75)' : 'scale(1)',
           zIndex: 999999999,
-          border: '8px solid rgba(34,197,94,0.7)',
+          border: `8px solid ${cursorColor}`,
           borderRadius: '50%',
           transitionProperty: 'transform, background-color',
           transitionDuration: '100ms',

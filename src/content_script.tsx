@@ -4,20 +4,18 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
   if (msg.message) {
     switch (msg.message) {
       case 'check_open_apps':
-        sendResponse({
-          cursorApp: document.getElementById('ab-cursor-app') !== null,
-        })
+        const response = {
+          alreadyRunning: document.getElementById('ab-cursor-app') !== null,
+        }
+        // @ts-ignore
+        window.cursorAppSettings = {
+          cursorType: msg.settings.cursorType,
+          cursorColor: msg.settings.cursorColor,
+        }
+        sendResponse(response)
         break
-      case 'close_cursor_app':
+      case 'close_app':
         window.dispatchEvent(new Event('closeCursorAppEvent'))
-        break
-      case 'invert_colors':
-        console.log('Receive color = ' + msg.color)
-        const invertFilter =
-          'invert(1) hue-rotate(180deg) saturate(80%) brightness(0.5) contrast(84%)'
-        document.documentElement.style.filter = invertFilter
-
-        sendResponse('Change color to ' + msg.color)
         break
     }
   }

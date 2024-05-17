@@ -1,27 +1,19 @@
-function polling() {
-  // console.log("polling");
-  setTimeout(polling, 1000 * 30);
-}
+chrome.action.onClicked.addListener((tab: any) => {
+  const tabId = tab.id
 
-polling();
+  chrome.storage.sync.get().then(result => {
+    console.log('Color setting : value is ' + result)
 
-// chrome.action.onClicked.addListener((tab: any) => {
-//   chrome.scripting.executeScript({
-//     target: {tabId: tab.id},
-//     files: ['./js/popup.js']
-//   });
-// });
+    chrome.tabs.sendMessage(tabId, { message: 'check_open_apps', settings: result }, msg => {
+      console.log('check_for_crosshair_app result message:', msg)
+      
+      if (msg.alreadyRunning !== true) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          files: ['./js/cursorApp.js'],
+        })
+      }
 
-// chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-//   console.log('sender', sender)
-//   console.log('msg', msg)
-//   if (msg.cursorApp) {
-//     chrome.scripting.executeScript({
-//       target: { tabId: msg.tabId },
-//       files: ['./js/cursorApp.js'],
-//     })
-//   }
-// })
-
-// @ts-ignore
-// window.cursorAppEvent = new Event('closeCursorAppEvent');
+    })
+  })
+})
