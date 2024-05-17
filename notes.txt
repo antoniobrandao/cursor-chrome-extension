@@ -1,0 +1,19 @@
+
+OPTIONS
+
+- Mode
+-- Simple
+    (only 1 crosshair, no measurements)
+-- Advanced
+    (allow clicking to compare previous position)
+
+- ESC to close
+
+- Color
+-- Automatic
+    (makes sure to be always visible regardless of colors in page)
+-- Blue
+-- Green
+-- Orange
+-- Purple
+-- Red 
