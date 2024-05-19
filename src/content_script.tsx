@@ -1,3 +1,17 @@
+const handleGetSettingsFromApp = (e: CustomEvent) => {
+  console.log('content_script: handleGetSettingsFromApp: e.detail', e.detail)
+  chrome.storage.sync.set({
+    cursorColor: e.detail.cursorColor,
+    cursorType: e.detail.cursorType
+  })
+  // // @ts-ignore
+  // window.cursorAppSettings = e.detail
+  // // @ts-ignore
+  // console.log('window.cursorAppSettings', window.cursorAppSettings)
+}
+// @ts-ignore
+window.addEventListener('dispatchCursorAppSettingsFromApp', handleGetSettingsFromApp, false)
+
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
   console.log('content_script: message listener: msg', msg)
   if (msg.message) {
@@ -16,7 +30,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         // console.log('window.cursorAppSettings', window.cursorAppSettings)
         sendResponse(response)
         setTimeout(() => {
-          const newEvent = new CustomEvent('dispatchCursorAppSettings', {detail: settingsPackage})
+          const newEvent = new CustomEvent('dispatchCursorAppSettingsFromContentScript', {detail: settingsPackage})
           window.dispatchEvent(newEvent)
         } , 200)
         break

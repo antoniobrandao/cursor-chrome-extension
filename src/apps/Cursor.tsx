@@ -37,11 +37,16 @@ const Cursor = () => {
       window.removeEventListener('mousedown', handleMouseDown)
       window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('closeCursorAppEvent', handleCloseAppEvent)
+      // @ts-ignore
+      window.removeEventListener('dispatchCursorAppSettingsFromContentScript', handleGetSettings)
+      // @ts-ignore
+      window.removeEventListener('dispatchCursorAppSettingsFromApp', handleGetSettings)
       rootEl.remove()
     }
   }
 
   useEffect(() => {
+    console.log('CURSOR APP  - useEffect')
     setMouseX(window.innerWidth / 2)
     setMouseY(window.innerHeight / 2)
     window.addEventListener('mousemove', handleMouseMove)
@@ -49,7 +54,9 @@ const Cursor = () => {
     window.addEventListener('mouseup', handleMouseUp)
     window.addEventListener('closeCursorAppEvent', handleCloseAppEvent, false)
     // @ts-ignore
-    window.addEventListener('dispatchCursorAppSettings', handleGetSettings, false)
+    window.addEventListener('dispatchCursorAppSettingsFromContentScript', handleGetSettings, false)
+    // @ts-ignore
+    window.addEventListener('dispatchCursorAppSettingsFromApp', handleGetSettings, false)
     // @ts-ignore
     if (window.cursorAppSettings && window.cursorAppSettings.cursorType) {
       // @ts-ignore
@@ -87,7 +94,13 @@ const Cursor = () => {
     top: '0',
     left: '0',
   }
-  const stylesSingle = { ...commonValues, border: `8px solid ${cursorColor}` }
+  
+  const stylesSingle = { 
+    ...commonValues,
+    border: `8px solid ${cursorColor}`,
+    opacity: cursorColor === ColorsEnum.AUTO ? '1' : '0.7'
+  }
+
   const stylesFlat = {
     ...commonValues,
     background: cursorColor,
