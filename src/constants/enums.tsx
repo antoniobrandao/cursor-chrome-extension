@@ -14,3 +14,9 @@ export enum CursorTypeEnum {
   SINGLE = 'single',
   FLAT = 'flat',
 }
+
+export enum AppEvent {
+  CHECK_IF_APP_IS_OPEN = 'CHECK_IF_APP_IS_OPEN',
+  ACTION_STARTUP_CHECK = 'ACTION_STARTUP_CHECK',
+  CLOSE_APP = 'CLOSE_APP',
+}

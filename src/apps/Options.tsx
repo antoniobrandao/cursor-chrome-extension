@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import clsx from 'clsx'
-import Switch from '../components/options/Switch'
 import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
-import CloseIconLarge from '../components/CloseIconLarge'
 import '../sharedstyles/tailwind.css'
 
 const getColorName = (color: ColorsEnum) => {
@@ -52,7 +50,7 @@ const Options = () => {
   const handleSetColor = (newColor: ColorsEnum) => {
     setCursorColor(newColor)
     if (!chrome || !chrome.storage) return
-    chrome.storage.sync.set({ color: newColor })
+    chrome.storage.sync.set({ cursorColor: newColor })
   }
 
   const handleSetCursorType = (newCursorType: CursorTypeEnum) => {
@@ -64,9 +62,9 @@ const Options = () => {
   const swatchBaseStyle = 'block w-[38px] h-[38px] rounded-full cursor-pointer'
 
   return (
-    <div className="min-w-screen min-h-screen bg-gray-900 m-0 p-0 flex flex-col">
+    <div className="h-screen w-screen bg-gray-900 m-0 p-0 flex flex-col">
       <div className="w-[400px] max-w-[90%] mx-auto pt-10 pb-10 flex flex-col gap-4">
-        <p className="text-[48px] leading-none mb-4 text-white">Cursor Highlight</p>
+        <p className="text-[36px] leading-none mb-4 text-white">Cursor Highlight Pro</p>
         <p className="text-[12px] text-white/50">OPTIONS</p>
 
         <div className="w-full h-[1px] bg-white/50 mb-5" />
@@ -94,10 +92,11 @@ const Options = () => {
               opacity: cursorType === CursorTypeEnum.SINGLE ? 1 : 0.3,
             }}
             className="w-[70px] h-[70px] rounded-full overflow-hidden"
-          ></div>
+            ></div>
           <div
             onClick={() => handleSetCursorType(CursorTypeEnum.FLAT)}
             style={{
+              cursor: 'pointer',
               background: cursorColor,
               opacity: cursorType === CursorTypeEnum.FLAT ? 1 : 0.3,
             }}
@@ -150,10 +149,10 @@ const Options = () => {
         </div>
         <div>
           <p className="text-[12px] text-white/50 leading-none mt-5 mb-4">
-            Mode: {getModeName(cursorType)}
+            Cursor type: {getModeName(cursorType)}
           </p>
           <p className="text-[12px] text-white/50 leading-none mt-1 mb-0">
-            Color: {getColorName(cursorColor)}
+            Cursor color: {getColorName(cursorColor)}
           </p>
           {cursorColor === ColorsEnum.AUTO && (
             <p className="text-[12px] text-white/30 mt-1.5">

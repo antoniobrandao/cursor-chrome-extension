@@ -9,7 +9,7 @@
   "options_page": "options.html",
   "action": {
     "default_icon": "icon.png",
-    "default_popup": "popup.html"
+    "default_title": "Cursor Highlight Pro"
   },
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["<all_urls>"],
