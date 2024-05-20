@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
+import '../sharedstyles/tailwind.css'
 // kimport CloseIcon from '../components/CloseIcon'
 
 const componentWidth = 260
@@ -7,6 +8,7 @@ const componentWidth = 260
 const Popup = () => {
   const [yPosition, setYPosition] = useState<number>(-100)
   const [appDismissed, setAppDismissed] = useState(true)
+  const [powerOff, setSetPowerOff] = useState(false)
   const [initialised, setInitialised] = useState(false)
   const [gotSettings, setGotSettings] = useState(false)
   // const [cursorAppOpen, setCursorAppOpen] = useState(false)
@@ -22,6 +24,9 @@ const Popup = () => {
     setCursorColor(e.detail.cursorColor)
     setAppDismissed(false)
     setGotSettings(true)
+    if (powerOff) {
+      setSetPowerOff(false)
+    }
   }
 
   // const closePopup = () => {
@@ -136,18 +141,25 @@ const Popup = () => {
     >
       <div
         ref={wrapperRef}
+        className="shadow"
         style={{
           boxSizing: 'border-box',
-          borderBottomRightRadius: '6px',
-          borderBottomLeftRadius: '6px',
+          borderBottomRightRadius: '10px',
+          borderBottomLeftRadius: '10px',
           position: 'fixed',
           top: `${appDismissed || !initialised || !gotSettings ? -100 : 0}px`,
           transition: 'top 0.3s',
-          background: '#121212',
+          background: '#0D0F14',
           display: 'flex',
           flexDirection: 'column',
-          padding: '8px',
           marginRight: '120px',
+          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+          border: '2px solid rgb(162 176 184 / 9%)',
+          borderTop: 'none',
+          paddingTop: '14px',
+          paddingRight: '20px',
+          paddingLeft: '20px',
+          paddingBottom: '16px',
         }}
       >
         <div
@@ -156,6 +168,8 @@ const Popup = () => {
             width: '100%',
             display: 'flex',
             justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '22px',
           }}
         >
           <div
@@ -164,7 +178,6 @@ const Popup = () => {
               display: 'flex',
               gap: '8px',
               justifyContent: 'space-between',
-              paddingRight: '16px',
             }}
           >
             <div
@@ -178,6 +191,7 @@ const Popup = () => {
                 height: '36px',
                 borderRadius: '50%',
                 overflow: 'hidden',
+                position: 'relative',
               }}
             >
               <div
@@ -185,14 +199,14 @@ const Popup = () => {
                   boxSizing: 'border-box',
                   cursor: 'pointer',
                   opacity: '0.5',
-                  border: `6px solid ${cursorColor}`,
-                  width: '36px',
-                  height: '36px',
+                  border: `4px solid ${cursorColor}`,
+                  width: '32px',
+                  height: '32px',
                   borderRadius: '50%',
                   overflow: 'hidden',
                   position: 'absolute',
-                  top: '8px',
-                  left: '8px',
+                  top: '0px',
+                  left: '0px',
                 }}
               ></div>
             </div>
@@ -228,7 +242,7 @@ const Popup = () => {
               boxSizing: 'border-box',
               display: 'flex',
               flexDirection: 'column',
-              gap: '3px',
+              gap: '4px',
               alignItems: 'flex-end',
             }}
           >
@@ -322,6 +336,23 @@ const Popup = () => {
               />
             </div>
           </div>
+          <>
+            <PowerIcon
+              onClick={() => {
+                const newState: boolean = !powerOff
+                setSetPowerOff(newState)
+                const newEvent = new CustomEvent('togglePowerButton', {
+                  detail: { powerOff: newState },
+                })
+                window.dispatchEvent(newEvent)
+              }}
+              style={{
+                cursor: 'pointer',
+                opacity: powerOff ? '0.5' : '1',
+                transform: 'scale(0.9)',
+              }}
+            />
+          </>
         </div>
       </div>
     </div>
@@ -351,3 +382,29 @@ export default Popup
 //   sendMessageWithoutResponse('close_app')
 //   window.close()
 // }
+
+function PowerIcon({ ...props }) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="21"
+      height="21"
+      fill="none"
+      viewBox="0 0 21 21"
+    >
+      <path
+        fill="#A4B1B9"
+        fillRule="evenodd"
+        d="M10 0a1 1 0 011 1v7a1 1 0 11-2 0V1a1 1 0 011-1z"
+        clipRule="evenodd"
+      ></path>
+      <path
+        fill="#A4B1B9"
+        fillRule="evenodd"
+        d="M15.693 3.893a1 1 0 011.414 0 10 10 0 11-14.189.044 1 1 0 011.424 1.406 8 8 0 1011.35-.036 1 1 0 01.001-1.414z"
+        clipRule="evenodd"
+      ></path>
+    </svg>
+  )
+}

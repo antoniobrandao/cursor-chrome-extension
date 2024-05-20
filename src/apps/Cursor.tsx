@@ -7,6 +7,7 @@ const Cursor = () => {
   const [mouseX, setMouseX] = useState(0)
   const [radius, setRadius] = useState(80)
   const [mouseY, setMouseY] = useState(0)
+  const [powerOff, setSetPowerOff] = useState(false)
   const [mouseDown, setMouseDown] = useState(false)
   const [cursorColor, setCursorColor] = useState<ColorsEnum | string>('transparent')
   const [cursorType, setCursorType] = useState<CursorTypeEnum | string>(CursorTypeEnum.DOUBLE)
@@ -21,6 +22,9 @@ const Cursor = () => {
   const handleMouseUp = (e: MouseEvent) => {
     setMouseDown(false)
   }
+  const handleTogglePower = (e: CustomEvent) => {
+    setSetPowerOff(e.detail.powerOff)
+  }
   const handleCloseAppEvent = (e: Event) => {
     removeApp()
   }
@@ -28,6 +32,10 @@ const Cursor = () => {
     console.log('get settings', e.detail)
     setCursorType(e.detail.cursorType)
     setCursorColor(e.detail.cursorColor)
+
+    if (powerOff) {
+      setSetPowerOff(false)
+    }
   }
 
   const removeApp = () => {
@@ -41,6 +49,8 @@ const Cursor = () => {
       window.removeEventListener('dispatchCursorAppSettingsFromContentScript', handleGetSettings)
       // @ts-ignore
       window.removeEventListener('dispatchCursorAppSettingsFromApp', handleGetSettings)
+      // @ts-ignore
+      window.removeEventListener('togglePowerButton', handleTogglePower)
       rootEl.remove()
     }
   }
@@ -53,6 +63,8 @@ const Cursor = () => {
     window.addEventListener('mousedown', handleMouseDown)
     window.addEventListener('mouseup', handleMouseUp)
     window.addEventListener('closeCursorAppEvent', handleCloseAppEvent, false)
+    // @ts-ignore
+    window.addEventListener('togglePowerButton', handleTogglePower, false)
     // @ts-ignore
     window.addEventListener('dispatchCursorAppSettingsFromContentScript', handleGetSettings, false)
     // @ts-ignore
@@ -94,11 +106,11 @@ const Cursor = () => {
     top: '0',
     left: '0',
   }
-  
-  const stylesSingle = { 
+
+  const stylesSingle = {
     ...commonValues,
     border: `8px solid ${cursorColor}`,
-    opacity: cursorColor === ColorsEnum.AUTO ? '1' : '0.7'
+    opacity: cursorColor === ColorsEnum.AUTO ? '1' : '0.7',
   }
 
   const stylesFlat = {
@@ -110,42 +122,44 @@ const Cursor = () => {
   return (
     <>
       <Popup />
-      <div
-        style={{
-          pointerEvents: 'none',
-          width: '100vw',
-          height: '100vh',
-          margin: '0',
-          position: 'fixed',
-          zIndex: 999999999,
-          top: '0',
-          left: '0',
-          mixBlendMode: cursorColor === ColorsEnum.AUTO ? 'difference' : 'unset',
-          // border: '2px solid red',
-          // background: 'rgba(255,255,255,0.01)'
-        }}
-      >
-        {cursorType === CursorTypeEnum.DOUBLE && (
-          <div
-            // @ts-ignore
-            style={stylesDouble}
-          >
-            <div style={stylesDoubleInner}></div>
-          </div>
-        )}
-        {cursorType === CursorTypeEnum.SINGLE && (
-          <div
-            // @ts-ignore
-            style={stylesSingle}
-          ></div>
-        )}
-        {cursorType === CursorTypeEnum.FLAT && (
-          <div
-            // @ts-ignore
-            style={stylesFlat}
-          ></div>
-        )}
-      </div>
+      {!powerOff && (
+        <div
+          style={{
+            pointerEvents: 'none',
+            width: '100vw',
+            height: '100vh',
+            margin: '0',
+            position: 'fixed',
+            zIndex: 999999999,
+            top: '0',
+            left: '0',
+            mixBlendMode: cursorColor === ColorsEnum.AUTO ? 'difference' : 'unset',
+            // border: '2px solid red',
+            // background: 'rgba(255,255,255,0.01)'
+          }}
+        >
+          {cursorType === CursorTypeEnum.DOUBLE && (
+            <div
+              // @ts-ignore
+              style={stylesDouble}
+            >
+              <div style={stylesDoubleInner}></div>
+            </div>
+          )}
+          {cursorType === CursorTypeEnum.SINGLE && (
+            <div
+              // @ts-ignore
+              style={stylesSingle}
+            ></div>
+          )}
+          {cursorType === CursorTypeEnum.FLAT && (
+            <div
+              // @ts-ignore
+              style={stylesFlat}
+            ></div>
+          )}
+        </div>
+      )}
     </>
   )
 }
