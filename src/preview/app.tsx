@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from '../apps/Cursor'
+import App from '../apps/App'
 import { Route, Switch } from 'wouter'
 
 function Preview() {

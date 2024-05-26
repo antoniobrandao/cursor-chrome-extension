@@ -5,24 +5,20 @@ const srcDir = path.join(__dirname, 'src')
 
 module.exports = {
   entry: {
-    popup: path.join(srcDir, 'popup.tsx'),
     options: path.join(srcDir, 'options.tsx'),
-    background: path.join(srcDir, 'background.ts'),
+    background: path.join(srcDir, 'background.tsx'),
     content_script: path.join(srcDir, 'content_script.tsx'),
-    cursorApp: path.join(srcDir, 'cursorApp.tsx'),
+    toggle_icon: path.join(srcDir, 'toggle_icon.tsx'),
+    app: path.join(srcDir, 'app.tsx'),
+    popup: path.join(srcDir, 'popup.tsx'),
+    cleanup: path.join(srcDir, 'cleanup.tsx'),
+    popup_invoker: path.join(srcDir, 'popup_invoker.tsx'),
+    wake_event: path.join(srcDir, 'wake_event.tsx'),
   },
   output: {
     path: path.join(__dirname, 'dist/js'),
     filename: '[name].js',
   },
-  // optimization: {
-  //   splitChunks: {
-  //     name: 'vendor',
-  //     chunks(chunk) {
-  //       return chunk.name !== 'background'
-  //     },
-  //   },
-  // },
   module: {
     rules: [
       {

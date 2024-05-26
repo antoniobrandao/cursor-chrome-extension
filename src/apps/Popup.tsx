@@ -1,112 +1,105 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
-import '../sharedstyles/tailwind.css'
-// kimport CloseIcon from '../components/CloseIcon'
-
-const componentWidth = 260
+import {
+  darkModeIconPaths,
+  lightModeIconPaths,
+  activeModeIconPaths,
+} from '../constants/icon_paths'
 
 const Popup = () => {
   const [yPosition, setYPosition] = useState<number>(-100)
-  const [appDismissed, setAppDismissed] = useState(true)
-  const [powerOff, setSetPowerOff] = useState(false)
+  // const [appDismissed, setAppDismissed] = useState(true)
+  const [appActive, setAppActive] = useState(false)
   const [initialised, setInitialised] = useState(false)
-  const [gotSettings, setGotSettings] = useState(false)
-  // const [cursorAppOpen, setCursorAppOpen] = useState(false)
-  // const [tabId, setTabId] = useState<number>()
+  // const [gotSettings, setGotSettings] = useState(false)
   const [cursorColor, setCursorColor] = useState<ColorsEnum>(ColorsEnum.GREEN)
-  const [cursorType, setCursorType] = useState<CursorTypeEnum>(CursorTypeEnum.DOUBLE)
+  const [cursorType, setCursorType] = useState<CursorTypeEnum>(
+    CursorTypeEnum.DOUBLE,
+  )
 
   const wrapperRef = useRef(null)
-
-  const handleGetSettings = (e: CustomEvent) => {
-    console.log('get settings', e.detail)
-    setCursorType(e.detail.cursorType)
-    setCursorColor(e.detail.cursorColor)
-    setAppDismissed(false)
-    setGotSettings(true)
-    if (powerOff) {
-      setSetPowerOff(false)
-    }
-  }
-
-  // const closePopup = () => {
-  //   setYPosition(-100)
-  //   setReceivedSettings(false)
-  //   // window.removeEventListener('mousedown', closePopup)
-  //   // // @ts-ignore
-  //   // window.removeEventListener('dispatchCursorAppSettings', handleGetSettings)
-  // }
 
   const handleClickOutside = (event: any) => {
     // @ts-ignore
     if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
       setYPosition(-100)
-      setAppDismissed(true)
+      // setAppDismissed(true)
     }
   }
+
+  const handleReInvokeCursorPopup = () => {
+    console.log('const handleReInvokeCursorPopup = () => {')
+    setYPosition(0)
+  }
+
+  // const handleCloseCursorAppEvent = () => {
+  //   console.log('handleCloseCursorAppEvent')
+  //   // @ts-ignore
+  //   window.removeEventListener('closeCursorAppEvent', handleCloseCursorAppEvent)
+  // }
 
   useEffect(() => {
     if (!initialised) {
       console.log('INITIALISING')
       // @ts-ignore
+      // window.addEventListener(
+      //   'closeCursorAppEvent',
+      //   handleCloseCursorAppEvent,
+      //   false,
+      // )
+      // @ts-ignore
       window.addEventListener(
-        'dispatchCursorAppSettingsFromContentScript',
-        handleGetSettings,
+        'reInvokeCursorPopup',
+        handleReInvokeCursorPopup,
         false,
       )
       document.addEventListener('mousedown', handleClickOutside)
       setInitialised(true)
-      setAppDismissed(false)
+      // setAppDismissed(false)
     }
-    // return () => {
-    //   document.removeEventListener('mousedown', handleClickOutside)
-    // }
+    chrome.storage.sync.get().then(result => {
+      console.log('POPUP onStart - STORAGE: cursorType', result.cursorType)
+      console.log('POPUP onStart - STORAGE: cursorColor', result.cursorColor)
+      console.log('POPUP onStart - STORAGE: appActive', result.appActive)
+      setCursorType(result.cursorType)
+      setCursorColor(result.cursorColor)
+      setAppActive(result.appActive)
+    })
   }, [wrapperRef])
-
-  // useEffect(() => {
-  //   console.log('INITIALISING')
-  //   if (!appDismissed) {
-  //     setTimeout(() => {
-  //       setYPosition(0)
-  //     }, 300)
-  //   }
-  // })
-
-  // const sendMessageWithoutResponse = (message: string) => {
-  //   if (!chrome || !chrome.tabs) return
-  //   chrome.tabs.sendMessage(tabId!, { message: message })
-  // }
 
   const handleSetColor = (newColor: ColorsEnum) => {
     setCursorColor(newColor)
-    const settingsPackage = {
-      cursorType: cursorType,
-      cursorColor: newColor,
-    }
-    const newEvent = new CustomEvent('dispatchCursorAppSettings', { detail: settingsPackage })
-    const newEventB = new CustomEvent('dispatchCursorAppSettingsFromApp', {
-      detail: settingsPackage,
-    })
-    window.dispatchEvent(newEvent)
-    window.dispatchEvent(newEventB)
     if (!chrome || !chrome.storage) return
-    chrome.storage.sync.set({ color: newColor })
+    console.log('popup trying to set storage : cursorColor: ' + newColor)
+    chrome.storage.sync.set({ cursorColor: newColor }).then(() => {
+      window.dispatchEvent(new Event('requestCursorSettingsUpdate'))
+    })
   }
 
   const handleSetCursorType = (newCursorType: CursorTypeEnum) => {
     setCursorType(newCursorType)
-    const settingsPackage = {
-      cursorType: newCursorType,
-      cursorColor: cursorColor,
-    }
-    const newEvent = new CustomEvent('dispatchCursorAppSettings', { detail: settingsPackage })
-    const newEventB = new CustomEvent('dispatchCursorAppSettingsFromApp', {
-      detail: settingsPackage,
-    })
-    window.dispatchEvent(newEvent)
-    window.dispatchEvent(newEventB)
     if (!chrome || !chrome.storage) return
-    chrome.storage.sync.set({ cursorType: newCursorType })
+    console.log('popup trying to set storage : cursorType: ' + newCursorType)
+    chrome.storage.sync.set({ cursorType: newCursorType }).then(() => {
+      window.dispatchEvent(new Event('requestCursorSettingsUpdate'))
+    })
+  }
+
+  const handleToggleAppActive = () => {
+    chrome.storage.sync.get().then(result => {
+      console.log('popup - chrome.storage.sync.get() : result', result)
+      if (result.appActive) {
+        chrome.storage.sync.set({ appActive: false }).then(() => {
+          setAppActive(false)
+          window.dispatchEvent(new CustomEvent('togglePowerButton'))
+        })
+      } else {
+        chrome.storage.sync.set({ appActive: true }).then(() => {
+          setAppActive(true)
+          window.dispatchEvent(new CustomEvent('togglePowerButton'))
+        })
+      }
+    })
   }
 
   const swatchBaseStyle = {
@@ -116,14 +109,6 @@ const Popup = () => {
     borderRadius: '50%',
     cusror: 'pointer',
   }
-
-  //   <div
-  //   onClick={handleClose}
-  //   className={clsx(swatchBaseStyle, 'relative opacity-30 hover:opacity-100')}
-  //   style={{ border: `2px solid ${ColorsEnum.AUTO}` }}
-  // >
-  //   <CloseIcon />
-  // </div>
 
   return (
     <div
@@ -141,19 +126,20 @@ const Popup = () => {
     >
       <div
         ref={wrapperRef}
-        className="shadow"
         style={{
           boxSizing: 'border-box',
           borderBottomRightRadius: '10px',
           borderBottomLeftRadius: '10px',
           position: 'fixed',
-          top: `${appDismissed || !initialised || !gotSettings ? -100 : 0}px`,
+          // top: `${appDismissed || !initialised || !gotSettings ? -100 : 0}px`,
+          top: yPosition,
           transition: 'top 0.3s',
           background: '#0D0F14',
           display: 'flex',
           flexDirection: 'column',
           marginRight: '120px',
-          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+          boxShadow:
+            '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
           border: '2px solid rgb(162 176 184 / 9%)',
           borderTop: 'none',
           paddingTop: '14px',
@@ -259,6 +245,7 @@ const Popup = () => {
                 style={{
                   ...swatchBaseStyle,
                   boxSizing: 'border-box',
+                  cursor: 'pointer',
                   background: ColorsEnum.GREEN,
                   opacity: cursorColor !== ColorsEnum.GREEN ? '0.3' : '1',
                 }}
@@ -268,6 +255,7 @@ const Popup = () => {
                 style={{
                   ...swatchBaseStyle,
                   boxSizing: 'border-box',
+                  cursor: 'pointer',
                   background: ColorsEnum.YELLOW,
                   opacity: cursorColor !== ColorsEnum.YELLOW ? '0.3' : '1',
                 }}
@@ -277,6 +265,7 @@ const Popup = () => {
                 style={{
                   ...swatchBaseStyle,
                   boxSizing: 'border-box',
+                  cursor: 'pointer',
                   background: ColorsEnum.ORANGE,
                   opacity: cursorColor !== ColorsEnum.ORANGE ? '0.3' : '1',
                 }}
@@ -286,6 +275,7 @@ const Popup = () => {
                 style={{
                   ...swatchBaseStyle,
                   boxSizing: 'border-box',
+                  cursor: 'pointer',
                   background: ColorsEnum.RED,
                   opacity: cursorColor !== ColorsEnum.RED ? '0.3' : '1',
                 }}
@@ -303,6 +293,7 @@ const Popup = () => {
                 style={{
                   ...swatchBaseStyle,
                   boxSizing: 'border-box',
+                  cursor: 'pointer',
                   background: ColorsEnum.PURPLE,
                   opacity: cursorColor !== ColorsEnum.PURPLE ? '0.3' : '1',
                 }}
@@ -312,6 +303,7 @@ const Popup = () => {
                 style={{
                   ...swatchBaseStyle,
                   boxSizing: 'border-box',
+                  cursor: 'pointer',
                   background: ColorsEnum.BLUE,
                   opacity: cursorColor !== ColorsEnum.BLUE ? '0.3' : '1',
                 }}
@@ -321,6 +313,7 @@ const Popup = () => {
                 style={{
                   ...swatchBaseStyle,
                   boxSizing: 'border-box',
+                  cursor: 'pointer',
                   background: ColorsEnum.CYAN,
                   opacity: cursorColor !== ColorsEnum.CYAN ? '0.3' : '1',
                 }}
@@ -330,6 +323,7 @@ const Popup = () => {
                 style={{
                   ...swatchBaseStyle,
                   boxSizing: 'border-box',
+                  cursor: 'pointer',
                   background: ColorsEnum.AUTO,
                   opacity: cursorColor !== ColorsEnum.AUTO ? '0.3' : '1',
                 }}
@@ -338,17 +332,10 @@ const Popup = () => {
           </div>
           <>
             <PowerIcon
-              onClick={() => {
-                const newState: boolean = !powerOff
-                setSetPowerOff(newState)
-                const newEvent = new CustomEvent('togglePowerButton', {
-                  detail: { powerOff: newState },
-                })
-                window.dispatchEvent(newEvent)
-              }}
+              onClick={handleToggleAppActive}
               style={{
                 cursor: 'pointer',
-                opacity: powerOff ? '0.5' : '1',
+                opacity: appActive ? '1' : '0.5',
                 transform: 'scale(0.9)',
               }}
             />
@@ -360,28 +347,6 @@ const Popup = () => {
 }
 
 export default Popup
-
-// const toggleCursorApp = () => {
-//   console.log('toggleCursorApp')
-//   if (cursorAppOpen) {
-//     setCursorAppOpen(false)
-//     sendMessageWithoutResponse('close_cursor_app')
-//     return
-//   }
-//   if (chrome || !chrome.scripting) {
-//     chrome.scripting.executeScript({
-//       target: { tabId: tabId! },
-//       files: ['./js/cursorApp.js'],
-//     })
-//   }
-//   setCursorAppOpen(true)
-//   window.close()
-// }
-
-// const handleClose = () => {
-//   sendMessageWithoutResponse('close_app')
-//   window.close()
-// }
 
 function PowerIcon({ ...props }) {
   return (
