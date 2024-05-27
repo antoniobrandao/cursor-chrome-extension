@@ -1,38 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
+import { getColorName, getModeName } from '../helpers'
 import '../styles/tailwind.css'
-
-const getColorName = (color: ColorsEnum) => {
-  switch (color) {
-    case ColorsEnum.AUTO:
-      return 'Auto'
-    case ColorsEnum.GREEN:
-      return 'Green'
-    case ColorsEnum.YELLOW:
-      return 'Yellow'
-    case ColorsEnum.ORANGE:
-      return 'Orange'
-    case ColorsEnum.RED:
-      return 'Red'
-    case ColorsEnum.PURPLE:
-      return 'Purple'
-    case ColorsEnum.BLUE:
-      return 'Blue'
-    case ColorsEnum.CYAN:
-      return 'Cyan'
-  }
-}
-const getModeName = (color: CursorTypeEnum) => {
-  switch (color) {
-    case CursorTypeEnum.DOUBLE:
-      return 'Double border'
-    case CursorTypeEnum.SINGLE:
-      return 'Single border'
-    case CursorTypeEnum.FLAT:
-      return 'Flat'
-  }
-}
 
 const Options = () => {
   const [cursorColor, setCursorColor] = useState<ColorsEnum>(ColorsEnum.GREEN)
@@ -40,7 +10,7 @@ const Options = () => {
 
   useEffect(() => {
     if (!chrome || !chrome.storage) return
-    chrome.storage.sync.get().then(result => {
+    chrome.storage.local.get().then(result => {
       console.log('result', result)
       setCursorType(result.cursorType)
       setCursorColor(result.cursorColor)
@@ -50,13 +20,13 @@ const Options = () => {
   const handleSetColor = (newColor: ColorsEnum) => {
     setCursorColor(newColor)
     if (!chrome || !chrome.storage) return
-    chrome.storage.sync.set({ cursorColor: newColor })
+    chrome.storage.local.set({ cursorColor: newColor })
   }
 
   const handleSetCursorType = (newCursorType: CursorTypeEnum) => {
     setCursorType(newCursorType)
     if (!chrome || !chrome.storage) return
-    chrome.storage.sync.set({ cursorType: newCursorType })
+    chrome.storage.local.set({ cursorType: newCursorType })
   }
 
   const swatchBaseStyle = 'block w-[38px] h-[38px] rounded-full cursor-pointer'

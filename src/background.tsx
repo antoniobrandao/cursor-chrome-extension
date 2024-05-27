@@ -1,16 +1,18 @@
 import { defaultColor, defaultCursorType } from './constants/defaults'
+import { getColorName } from './helpers'
 import {
   darkModeIconPaths,
   lightModeIconPaths,
   activeModeIconPaths,
 } from './constants/icon_paths'
+import { ColorsEnum } from './constants/enums'
 
 let isDarkMode = false
 let isOpen = false
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   // if (reason === 'install') {
-  chrome.storage.sync.set({
+  chrome.storage.local.set({
     cursorColor: defaultColor,
     cursorType: defaultCursorType,
     appActive: false,
@@ -20,7 +22,7 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 })
 
 // chrome.runtime.onStartup.addListener(() => {
-//   chrome.storage.sync.get().then(result => {
+//   chrome.storage.local.get().then(result => {
 //     console.log('Cursor Highlighter Pro : onStartup : props is ' + result)
 //     if(result.appActive) {
 //       chrome.action.setIcon({
@@ -38,7 +40,7 @@ let themeInterval: any
 
 themeInterval = setInterval(() => {
   // console.log('setInterval (toggle_icon)')
-  chrome.storage.sync.get().then(result => {
+  chrome.storage.local.get().then(result => {
     console.log('Background polling result is ' + result)
     console.log('result.colorScheme', result.colorScheme)
     console.log('result.appActive', result.appActive)
@@ -46,32 +48,67 @@ themeInterval = setInterval(() => {
     if (!result) {
       return
     }
-    if (result.appActive === true) {
-      chrome.action.setIcon({
-        path: activeModeIconPaths,
-      })
-      // clearInterval(themeInterval)
-    } else if (result.colorScheme === 'dark') {
-      chrome.action.setIcon({
-        path: darkModeIconPaths,
-      })
-      // clearInterval(themeInterval)
-    } else if (result.colorScheme === 'light') {
-      chrome.action.setIcon({
-        path: lightModeIconPaths,
-      })
-      // clearInterval(themeInterval)
+    if (!result.colorScheme) {
+      return
     }
+
+    const typeName = String(result.cursorType).toLowerCase()
+    const colorName = getColorName(result.cursorColor).toLowerCase()
+
+    let iconName
+    if(result.appActive) {
+      iconName = `${typeName}-on-${colorName}`
+      if(result.cursorColor === ColorsEnum.AUTO) {
+        iconName = `${typeName}-on-auto-${result.colorScheme}`
+      }
+    } else {
+      iconName = `${typeName}-off-${result.colorScheme}`
+    }
+
+    const iconPath = `/icons/icon-${iconName}.png`
+
+    console.log('iconPath', iconPath)
+
+    const iconPathsObject = {
+      '128': iconPath,
+      '48': iconPath,
+      '32': iconPath,
+      '16': iconPath,
+    }
+
+    chrome.action.setIcon({
+      path: iconPathsObject,
+    })
+
+    // if (result.appActive === true) {
+    //   chrome.action.setIcon({
+    //     path: activeModeIconPaths,
+    //   })
+    //   // clearInterval(themeInterval)
+    // } else if (result.colorScheme === 'dark') {
+    //   chrome.action.setIcon({
+    //     path: darkModeIconPaths,
+    //   })
+    //   // clearInterval(themeInterval)
+    // } else if (result.colorScheme === 'light') {
+    //   chrome.action.setIcon({
+    //     path: lightModeIconPaths,
+    //   })
+    //   // clearInterval(themeInterval)
+    // }
   })
 }, 500)
 
 chrome.runtime.onMessage.addListener(function (request) {
-  if (request.scheme && (request.scheme === 'dark' || request.scheme === 'light')) {
+  if (
+    request.scheme &&
+    (request.scheme === 'dark' || request.scheme === 'light')
+  ) {
     // isDarkMode = true
-    chrome.storage.sync.set({
+    chrome.storage.local.set({
       colorScheme: request.scheme,
     })
-    // chrome.storage.sync.get().then(result => {
+    // chrome.storage.local.get().then(result => {
     //   chrome.action.setIcon({
     //     path: result.appActive ? activeModeIconPaths : darkModeIconPaths,
     //   })
@@ -84,10 +121,10 @@ chrome.runtime.onMessage.addListener(function (request) {
 // and the popup should be shown
 chrome.action.onClicked.addListener((tab: any) => {
   const tabId = tab.id
-  chrome.storage.sync.get().then(result => {
+  chrome.storage.local.get().then(result => {
     console.log('Color setting : value is ' + result)
     if (!result.appActive) {
-      chrome.storage.sync.set({
+      chrome.storage.local.set({
         appActive: true,
       })
     }
@@ -115,7 +152,7 @@ chrome.action.onClicked.addListener((tab: any) => {
 
 const ensureMounted = (tabId: any) => {
   console.log('ensureMounted tabId:', tabId)
-  chrome.storage.sync.get().then(result => {
+  chrome.storage.local.get().then(result => {
     console.log('Cursor Highlighter Pro : onStartup : props is ' + result)
     // if (result.appActive) {
     chrome.scripting.executeScript({
@@ -145,7 +182,7 @@ const handleTabPing = (tabId: number) => {
     if (tabs && tabs[0] && tabs[0].url) {
       console.log('handleActivated passed : tabs[0].url: ', tabs[0].url)
       ensureMounted(tabId)
-      chrome.storage.sync.get().then(result => {
+      chrome.storage.local.get().then(result => {
         console.log('handleActivated : result.appActive ' + result.appActive)
         if (!result.appActive) {
           chrome.scripting.executeScript({

@@ -62,7 +62,7 @@ const Popup = () => {
       // setAppDismissed(false)
     }
     if (chrome && chrome.storage) {
-      chrome.storage.sync.get().then(result => {
+      chrome.storage.local.get().then(result => {
         console.log('POPUP onStart - STORAGE: cursorType', result.cursorType)
         console.log('POPUP onStart - STORAGE: cursorColor', result.cursorColor)
         console.log('POPUP onStart - STORAGE: appActive', result.appActive)
@@ -81,7 +81,7 @@ const Popup = () => {
     setCursorColor(newColor)
     if (!chrome || !chrome.storage) return
     console.log('popup trying to set storage : cursorColor: ' + newColor)
-    chrome.storage.sync.set({ cursorColor: newColor }).then(() => {
+    chrome.storage.local.set({ cursorColor: newColor }).then(() => {
       window.dispatchEvent(new Event('requestCursorSettingsUpdate'))
     })
   }
@@ -90,21 +90,21 @@ const Popup = () => {
     setCursorType(newCursorType)
     if (!chrome || !chrome.storage) return
     console.log('popup trying to set storage : cursorType: ' + newCursorType)
-    chrome.storage.sync.set({ cursorType: newCursorType }).then(() => {
+    chrome.storage.local.set({ cursorType: newCursorType }).then(() => {
       window.dispatchEvent(new Event('requestCursorSettingsUpdate'))
     })
   }
 
   const handleToggleAppActive = () => {
-    chrome.storage.sync.get().then(result => {
-      console.log('popup - chrome.storage.sync.get() : result', result)
+    chrome.storage.local.get().then(result => {
+      console.log('popup - chrome.storage.local.get() : result', result)
       if (result.appActive) {
-        chrome.storage.sync.set({ appActive: false }).then(() => {
+        chrome.storage.local.set({ appActive: false }).then(() => {
           setAppActive(false)
           window.dispatchEvent(new CustomEvent('togglePowerButton'))
         })
       } else {
-        chrome.storage.sync.set({ appActive: true }).then(() => {
+        chrome.storage.local.set({ appActive: true }).then(() => {
           setAppActive(true)
           window.dispatchEvent(new CustomEvent('togglePowerButton'))
         })
@@ -127,7 +127,7 @@ const Popup = () => {
   return (
     <div
       style={{
-        zIndex: '9999999',
+        zIndex: 9999999999,
         display: 'flex',
         justifyContent: 'flex-end',
         boxSizing: 'border-box',

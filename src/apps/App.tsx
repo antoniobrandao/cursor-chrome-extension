@@ -65,8 +65,8 @@ const App = () => {
     setMouseDown(false)
   }
   const handleTogglePower = (e: CustomEvent) => {
-    chrome.storage.sync.get().then(result => {
-      console.log('handleWakeEvent chrome.storage.sync.get() : result', result)
+    chrome.storage.local.get().then(result => {
+      console.log('handleWakeEvent chrome.storage.local.get() : result', result)
       setAppActive(result.appActive)
     })
   }
@@ -75,8 +75,8 @@ const App = () => {
     setAppActive(false)
   }
   const handleWakeEvent = (e: Event) => {
-    chrome.storage.sync.get().then(result => {
-      console.log('handleWakeEvent chrome.storage.sync.get() : result', result)
+    chrome.storage.local.get().then(result => {
+      console.log('handleWakeEvent chrome.storage.local.get() : result', result)
       setAppActive(result.appActive)
     })
   }
@@ -117,8 +117,8 @@ const App = () => {
   // }
 
   const handleRequestSettingsUpdate = () => {
-    chrome.storage.sync.get().then(result => {
-      console.log('chrome.storage.sync.get() : result', result)
+    chrome.storage.local.get().then(result => {
+      console.log('chrome.storage.local.get() : result', result)
       setCursorType(result.cursorType)
       setCursorColor(result.cursorColor)
     })
@@ -144,7 +144,7 @@ const App = () => {
     // @ts-ignore
     window.addEventListener('cursorAppWakeEvent', handleWakeEvent, false)
 
-    chrome.storage.sync.get().then(result => {
+    chrome.storage.local.get().then(result => {
       console.log('CURSOR APP onStart - STORAGE: cursorType', result.cursorType)
       console.log(
         'CURSOR APP onStart - STORAGE: cursorColor',

@@ -54,7 +54,7 @@ chrome.runtime.onMessage.addListener(function (
 //     'content_script: handleGetSettingsFromApp: e.detail',
 //     e.detail,
 //   )
-//   chrome.storage.sync.set({
+//   chrome.storage.local.set({
 //     cursorColor: e.detail.cursorColor,
 //     cursorType: e.detail.cursorType,
 //   })
