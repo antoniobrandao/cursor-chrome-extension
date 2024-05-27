@@ -10,7 +10,7 @@ import React, { useEffect, useState, useRef } from 'react'
 // import Popup from './Popup'
 import { appElementClass } from '../appConfig'
 import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
-import '../sharedstyles/animations.css'
+import '../styles/animations.css'
 
 const App = () => {
   const [mouseX, setMouseX] = useState(0)
@@ -203,6 +203,10 @@ const App = () => {
   }
 
   if (!appActive) return null
+  if (mouseX === 0) return null
+  if (mouseY === 0) return null
+  if (window && mouseX === window.innerWidth) return null
+  if (window && mouseY === window.innerHeight) return null
 
   return (
     <div

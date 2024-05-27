@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
-import '../sharedstyles/tailwind.css'
+import '../styles/tailwind.css'
 
 const getColorName = (color: ColorsEnum) => {
   switch (color) {
