@@ -100,6 +100,8 @@ themeInterval = setInterval(() => {
 }, 500)
 
 chrome.runtime.onMessage.addListener(function (request) {
+  console.log('request chrome.runtime.onMessage', request);
+  
   if (
     request.scheme &&
     (request.scheme === 'dark' || request.scheme === 'light')

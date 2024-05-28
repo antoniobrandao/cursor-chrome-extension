@@ -124,8 +124,19 @@ const App = () => {
     })
   }
 
+  const checkStorageSettings = () => {
+    chrome.storage.local.get().then(result => {
+      console.log('checkStorageSettings timeout : result', result)
+      setAppActive(result.appActive)
+      setCursorType(result.cursorType)
+      setCursorColor(result.cursorColor)
+    })
+  }
+
   useEffect(() => {
     console.log('CURSOR APP  - useEffect')
+
+    setInterval(checkStorageSettings, 1000)
     handleRequestSettingsUpdate()
     setMouseX(window.innerWidth / 2)
     setMouseY(window.innerHeight / 2)
