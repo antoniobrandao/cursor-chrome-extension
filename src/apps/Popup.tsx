@@ -1,21 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
-import {
-  darkModeIconPaths,
-  lightModeIconPaths,
-  activeModeIconPaths,
-} from '../constants/icon_paths'
-import '../styles/popup.css'
 import tinycolor from 'tinycolor2'
 import { defaultColor, defaultCursorType } from '../constants/defaults'
+import Swatches from './components/Swatches'
+import CursorTypes from './components/CursorTypes'
+import '../styles/popup.css'
 
 const Popup = () => {
   const [yPosition, setYPosition] = useState<number>(-100)
-  // const [yPosition, setYPosition] = useState<number>(0)
-  // const [appDismissed, setAppDismissed] = useState(true)
   const [appActive, setAppActive] = useState(false)
   const [initialised, setInitialised] = useState(false)
-  // const [gotSettings, setGotSettings] = useState(false)
   const [cursorColor, setCursorColor] = useState<ColorsEnum>(ColorsEnum.GREEN)
   const [cursorType, setCursorType] = useState<CursorTypeEnum>(
     CursorTypeEnum.DOUBLE,
@@ -27,7 +21,6 @@ const Popup = () => {
     // @ts-ignore
     if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
       setYPosition(-100)
-      // setAppDismissed(true)
     }
   }
 
@@ -36,21 +29,9 @@ const Popup = () => {
     setYPosition(2)
   }
 
-  // const handleCloseCursorAppEvent = () => {
-  //   console.log('handleCloseCursorAppEvent')
-  //   // @ts-ignore
-  //   window.removeEventListener('closeCursorAppEvent', handleCloseCursorAppEvent)
-  // }
-
   useEffect(() => {
     if (!initialised) {
       console.log('INITIALISING')
-      // @ts-ignore
-      // window.addEventListener(
-      //   'closeCursorAppEvent',
-      //   handleCloseCursorAppEvent,
-      //   false,
-      // )
       // @ts-ignore
       window.addEventListener(
         'reInvokeCursorPopup',
@@ -59,7 +40,6 @@ const Popup = () => {
       )
       document.addEventListener('mousedown', handleClickOutside)
       setInitialised(true)
-      // setAppDismissed(false)
     }
     if (chrome && chrome.storage) {
       chrome.storage.local.get().then(result => {
@@ -112,18 +92,14 @@ const Popup = () => {
     })
   }
 
-  const swatchBaseStyle = {
-    display: 'block',
-    width: '16px',
-    height: '16px',
-    borderRadius: '50%',
-    cusror: 'pointer',
-  }
-
-  const divider = <div className='ab-cursor-divider' style={{ width: '1px', height: '26px' }} />
-  const colorToUse = cursorColor
+  const divider = (
+    <div
+      className="ab-cursor-divider"
+      style={{ width: '1px', height: '26px' }}
+    />
+  )
   const colorToUseTC = tinycolor(cursorColor)
-  const colorToUseTCTransparent = colorToUseTC.setAlpha(.5)
+  const colorToUseTCTransparent = colorToUseTC.setAlpha(0.5)
   return (
     <div
       style={{
@@ -143,11 +119,8 @@ const Popup = () => {
         ref={wrapperRef}
         style={{
           boxSizing: 'border-box',
-          // borderBottomRightRadius: '10px',
-          // borderBottomLeftRadius: '10px',
           borderRadius: '10px',
           position: 'fixed',
-          // top: `${appDismissed || !initialised || !gotSettings ? -100 : 0}px`,
           top: yPosition,
           transition: 'top 0.3s',
           display: 'flex',
@@ -156,29 +129,15 @@ const Popup = () => {
           height: '60px',
           boxShadow:
             '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-          // border: '2px solid rgb(162 176 184 / 9%)',
           borderWidth: '2px',
           borderStyle: 'solid',
-          // borderTop: 'none',
           paddingTop: '10px',
           paddingRight: '18px',
           paddingLeft: '10px',
           paddingBottom: '10px',
-          // borderColor: cursorColor,
           borderColor: colorToUseTCTransparent.toRgbString(),
         }}
       >
-        {/* <div
-          style={{
-            width: '100%',
-            height: '100%',
-            backgroundColor: cursorColor,
-            opacity: '0.1',
-            position: 'absolute',
-            top: '0',
-            left: '0',
-          }}
-        /> */}
         <div
           style={{
             boxSizing: 'border-box',
@@ -190,201 +149,13 @@ const Popup = () => {
             position: 'relative',
           }}
         >
-          <div
-            style={{
-              boxSizing: 'border-box',
-              display: 'flex',
-              gap: '8px',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div
-              className={
-                cursorColor === ColorsEnum.AUTO
-                  ? 'ab-cursor-bw-element-border'
-                  : ''
-              }
-              onClick={() => handleSetCursorType(CursorTypeEnum.DOUBLE)}
-              style={{
-                boxSizing: 'border-box',
-                cursor: 'pointer',
-                border: `2px solid ${cursorColor}`,
-                // borderWidth: '2px',
-                // borderStyle: 'solid',
-                // borderColor: cursorColor === ColorsEnum.AUTO ? }`,
-                opacity: cursorType === CursorTypeEnum.DOUBLE ? 1 : 0.3,
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                position: 'relative',
-              }}
-            >
-              <div
-                className={
-                  cursorColor === ColorsEnum.AUTO
-                    ? 'ab-cursor-bw-element-border'
-                    : ''
-                }
-                style={{
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                  opacity: '0.5',
-                  border: `4px solid ${cursorColor}`,
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  position: 'absolute',
-                  top: '0px',
-                  left: '0px',
-                }}
-              ></div>
-            </div>
-            <div
-              className={
-                cursorColor === ColorsEnum.AUTO
-                  ? 'ab-cursor-bw-element-border'
-                  : ''
-              }
-              onClick={() => handleSetCursorType(CursorTypeEnum.SINGLE)}
-              style={{
-                boxSizing: 'border-box',
-                cursor: 'pointer',
-                border: `5px solid ${cursorColor}`,
-                opacity: cursorType === CursorTypeEnum.SINGLE ? 1 : 0.3,
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-              }}
-            ></div>
-            <div
-              className={
-                cursorColor === ColorsEnum.AUTO ? 'ab-cursor-bw-element-bg' : ''
-              }
-              onClick={() => handleSetCursorType(CursorTypeEnum.FLAT)}
-              style={{
-                boxSizing: 'border-box',
-                width: '36px',
-                height: '36px',
-                cursor: 'pointer',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                background: cursorColor,
-                opacity: cursorType === CursorTypeEnum.FLAT ? 1 : 0.3,
-              }}
-            ></div>
-          </div>
+          <CursorTypes
+            handleSetCursorType={handleSetCursorType}
+            cursorColor={cursorColor}
+            cursorType={cursorType}
+          />
           {divider}
-          <div
-            style={{
-              boxSizing: 'border-box',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-              alignItems: 'flex-end',
-            }}
-          >
-            <div
-              style={{
-                boxSizing: 'border-box',
-                display: 'flex',
-                justifyContent: 'space-between',
-                gap: '4px',
-              }}
-            >
-              <div
-                onClick={() => handleSetColor(ColorsEnum.GREEN)}
-                style={{
-                  ...swatchBaseStyle,
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                  background: ColorsEnum.GREEN,
-                  opacity: cursorColor !== ColorsEnum.GREEN ? '0.3' : '1',
-                }}
-              />
-              <div
-                onClick={() => handleSetColor(ColorsEnum.YELLOW)}
-                style={{
-                  ...swatchBaseStyle,
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                  background: ColorsEnum.YELLOW,
-                  opacity: cursorColor !== ColorsEnum.YELLOW ? '0.3' : '1',
-                }}
-              />
-              <div
-                onClick={() => handleSetColor(ColorsEnum.ORANGE)}
-                style={{
-                  ...swatchBaseStyle,
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                  background: ColorsEnum.ORANGE,
-                  opacity: cursorColor !== ColorsEnum.ORANGE ? '0.3' : '1',
-                }}
-              />
-              <div
-                onClick={() => handleSetColor(ColorsEnum.RED)}
-                style={{
-                  ...swatchBaseStyle,
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                  background: ColorsEnum.RED,
-                  opacity: cursorColor !== ColorsEnum.RED ? '0.3' : '1',
-                }}
-              />
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                gap: '4px',
-              }}
-            >
-              <div
-                onClick={() => handleSetColor(ColorsEnum.PURPLE)}
-                style={{
-                  ...swatchBaseStyle,
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                  background: ColorsEnum.PURPLE,
-                  opacity: cursorColor !== ColorsEnum.PURPLE ? '0.3' : '1',
-                }}
-              />
-              <div
-                onClick={() => handleSetColor(ColorsEnum.BLUE)}
-                style={{
-                  ...swatchBaseStyle,
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                  background: ColorsEnum.BLUE,
-                  opacity: cursorColor !== ColorsEnum.BLUE ? '0.3' : '1',
-                }}
-              />
-              <div
-                onClick={() => handleSetColor(ColorsEnum.CYAN)}
-                style={{
-                  ...swatchBaseStyle,
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                  background: ColorsEnum.CYAN,
-                  opacity: cursorColor !== ColorsEnum.CYAN ? '0.3' : '1',
-                }}
-              />
-              <div
-                className="ab-cursor-bw-element-bg"
-                onClick={() => handleSetColor(ColorsEnum.AUTO)}
-                style={{
-                  ...swatchBaseStyle,
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                  // background: ColorsEnum.AUTO,
-                  opacity: cursorColor !== ColorsEnum.AUTO ? '0.3' : '1',
-                }}
-              />
-            </div>
-          </div>
+          <Swatches handleSetColor={handleSetColor} cursorColor={cursorColor} />
           {divider}
           <PowerIcon
             cursorColor={cursorColor}

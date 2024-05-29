@@ -23,6 +23,3 @@ if (!alreadyExistsEl) {
     </React.StrictMode>,
   )
 }
-// else {
-//   window.dispatchEvent(new Event('reInvokeCursorPopup'))
-// }
