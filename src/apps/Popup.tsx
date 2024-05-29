@@ -28,8 +28,19 @@ const Popup = () => {
     setYPosition(2)
   }
 
+  const checkStorageSettings = () => {
+    chrome.storage.local.get().then(result => {
+      console.log('checkStorageSettings timeout : result', result)
+      setAppActive(result.appActive)
+      setCursorType(result.cursorType)
+      setCursorColor(result.cursorColor)
+    })
+  }
+
   useEffect(() => {
     if (!initialised) {
+      setInterval(checkStorageSettings, 1000)
+      console.log('INITIALISING')
       // @ts-ignore
       window.addEventListener(
         'reInvokeCursorPopup',
