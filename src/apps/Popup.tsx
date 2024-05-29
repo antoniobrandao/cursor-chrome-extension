@@ -25,13 +25,11 @@ const Popup = () => {
   }
 
   const handleReInvokeCursorPopup = () => {
-    console.log('const handleReInvokeCursorPopup = () => {')
     setYPosition(2)
   }
 
   useEffect(() => {
     if (!initialised) {
-      console.log('INITIALISING')
       // @ts-ignore
       window.addEventListener(
         'reInvokeCursorPopup',
@@ -43,9 +41,6 @@ const Popup = () => {
     }
     if (chrome && chrome.storage) {
       chrome.storage.local.get().then(result => {
-        console.log('POPUP onStart - STORAGE: cursorType', result.cursorType)
-        console.log('POPUP onStart - STORAGE: cursorColor', result.cursorColor)
-        console.log('POPUP onStart - STORAGE: appActive', result.appActive)
         setCursorType(result.cursorType)
         setCursorColor(result.cursorColor)
         setAppActive(result.appActive)
@@ -60,7 +55,6 @@ const Popup = () => {
   const handleSetColor = (newColor: ColorsEnum) => {
     setCursorColor(newColor)
     if (!chrome || !chrome.storage) return
-    console.log('popup trying to set storage : cursorColor: ' + newColor)
     chrome.storage.local.set({ cursorColor: newColor }).then(() => {
       window.dispatchEvent(new Event('requestCursorSettingsUpdate'))
     })
@@ -69,7 +63,6 @@ const Popup = () => {
   const handleSetCursorType = (newCursorType: CursorTypeEnum) => {
     setCursorType(newCursorType)
     if (!chrome || !chrome.storage) return
-    console.log('popup trying to set storage : cursorType: ' + newCursorType)
     chrome.storage.local.set({ cursorType: newCursorType }).then(() => {
       window.dispatchEvent(new Event('requestCursorSettingsUpdate'))
     })
@@ -77,7 +70,6 @@ const Popup = () => {
 
   const handleToggleAppActive = () => {
     chrome.storage.local.get().then(result => {
-      console.log('popup - chrome.storage.local.get() : result', result)
       if (result.appActive) {
         chrome.storage.local.set({ appActive: false }).then(() => {
           setAppActive(false)

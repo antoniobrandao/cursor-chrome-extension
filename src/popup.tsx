@@ -3,13 +3,6 @@ import Popup from './apps/Popup'
 import { createRoot } from 'react-dom/client'
 import { appPopupElementClass } from './appConfig'
 
-// const root = createRoot(document.getElementById('root')!)
-// root.render(
-//   <React.StrictMode>
-//     <Popup />
-//   </React.StrictMode>,
-// )
-
 const alreadyExistsEl = document.getElementById(appPopupElementClass)
 if (!alreadyExistsEl) {
   const newNode = document.createElement('div')
