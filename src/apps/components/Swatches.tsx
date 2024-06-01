@@ -1,5 +1,5 @@
 import React from 'react'
-import { ColorsEnum, CursorTypeEnum } from '../../constants/enums'
+import { ColorsEnum } from '../../constants/enums'
 
 const swatchBaseStyle = {
   display: 'block',

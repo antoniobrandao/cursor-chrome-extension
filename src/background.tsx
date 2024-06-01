@@ -12,16 +12,9 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 
 const updateIcon = () => {
   chrome.storage.local.get().then(result => {
-    // console.log('Background polling result is ' + result)
-    // console.log('result.colorScheme', result.colorScheme)
-    // console.log('result.appActive', result.appActive)
-    if (!result) {
+    if (!result || !result.colorScheme) {
       return
     }
-    if (!result.colorScheme) {
-      return
-    }
-
     const typeName = String(result.cursorType).toLowerCase()
     const colorName = getColorName(result.cursorColor).toLowerCase()
 
@@ -52,9 +45,9 @@ const updateIcon = () => {
 
 setInterval(updateIcon, 500)
 
+// color scheme listener
 chrome.runtime.onMessage.addListener(function (request) {
   console.log('request chrome.runtime.onMessage', request);
-  
   if (
     request.scheme &&
     (request.scheme === 'dark' || request.scheme === 'light')

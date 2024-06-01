@@ -1,14 +1,4 @@
-// on action click, inject popup into the page
-// popup will save setings to storage and send events to App to request settings update
-//
-// when tab is invoked and app is active, inject app anyway
-// but in this case, app checks that app is already there, and send event to update settings
-//
-//
-
 import React, { useEffect, useState, useRef } from 'react'
-// import Popup from './Popup'
-import { appElementClass } from '../appConfig'
 import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
 import '../styles/animations.css'
 
@@ -17,8 +7,6 @@ const App = () => {
   const [radius, setRadius] = useState(80)
   const [mouseY, setMouseY] = useState(0)
   const [mouseOpacity, setMouseOpacity] = useState('0')
-  // const [ignoringMouseUp, setIgnoringMouseUp] =
-  //   useState<boolean>(false)
   const [appActive, setAppActive] = useState(true)
   const [mouseDown, setMouseDown] = useState(false)
   const [cursorColor, setCursorColor] = useState<ColorsEnum | string>(
@@ -41,12 +29,10 @@ const App = () => {
   }
   const handleMouseDown = (e: MouseEvent) => {
     setMouseDown(true)
-    // setIgnoringMouseUp(true)
     if (pointClickElementRef && pointClickElementRef.current) {
       const clickEventElement: HTMLElement = pointClickElementRef.current
       clickEventElement.style.transition = 'none'
       clickEventElement.style.opacity = '0.6'
-      // clickEventElement.style.transform = 'scale(0.3)'
       clickEventElement.style.top = `${
         e.clientY - pointClickElementRadius / 2
       }px`
@@ -66,55 +52,21 @@ const App = () => {
   }
   const handleTogglePower = (e: CustomEvent) => {
     chrome.storage.local.get().then(result => {
-      console.log('handleWakeEvent chrome.storage.local.get() : result', result)
+      console.log('handleTogglePower chrome.storage.local.get() : result', result)
       setAppActive(result.appActive)
     })
   }
+  
   const handleCloseAppEvent = (e: Event) => {
-    // removeApp()
     setAppActive(false)
   }
+
   const handleWakeEvent = (e: Event) => {
     chrome.storage.local.get().then(result => {
       console.log('handleWakeEvent chrome.storage.local.get() : result', result)
       setAppActive(result.appActive)
     })
   }
-  // const handleGetSettings = (e: CustomEvent) => {
-  //   console.log('get settings', e.detail)
-  //   setCursorType(e.detail.cursorType)
-  //   setCursorColor(e.detail.cursorColor)
-  //   if (powerOff) {
-  //     setAppActive(false)
-  //   }
-  // }
-
-  // const removeApp = () => {
-  //   const rootEl = document.getElementById(appElementClass)
-  //   if (rootEl) {
-  //     window.removeEventListener('mousemove', handleMouseMove)
-  //     window.removeEventListener('mousedown', handleMouseDown)
-  //     window.removeEventListener('mouseup', handleMouseUp)
-  //     window.removeEventListener('closeCursorAppEvent', handleCloseAppEvent)
-  //     // @ts-ignore
-  //     // window.removeEventListener(
-  //     //   'dispatchCursorAppSettingsFromContentScript',
-  //     //   handleGetSettings,
-  //     // )
-  //     // @ts-ignore
-  //     // window.removeEventListener(
-  //     //   'dispatchCursorAppSettingsFromPopup',
-  //     //   handleGetSettings,
-  //     // )
-  //     // @ts-ignore
-  //     window.removeEventListener('togglePowerButton', handleTogglePower)
-  //     // @ts-ignore
-  //     window.removeEventListener('cursorAppWakeEvent', handleWakeEvent)
-  //     rootEl.remove()
-  //     // const closeEvent = new CustomEvent('dispatchCloseFromCursorApp')
-  //     // window.dispatchEvent(closeEvent)
-  //   }
-  // }
 
   const handleRequestSettingsUpdate = () => {
     chrome.storage.local.get().then(result => {
@@ -236,7 +188,6 @@ const App = () => {
       }}
     >
       <div
-        className="AQUI CARALHO"
         ref={pointClickElementRef}
         style={{
           opacity: '0',
