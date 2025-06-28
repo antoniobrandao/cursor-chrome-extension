@@ -35,7 +35,7 @@ const Swatches = (props: Props) => {
         }}
       >
         <div
-          onClick={() => handleSetColor(ColorsEnum.GREEN)}
+          onPointerDown={() => handleSetColor(ColorsEnum.GREEN)}
           style={{
             ...swatchBaseStyle,
             boxSizing: 'border-box',
@@ -45,7 +45,7 @@ const Swatches = (props: Props) => {
           }}
         />
         <div
-          onClick={() => handleSetColor(ColorsEnum.YELLOW)}
+          onPointerDown={() => handleSetColor(ColorsEnum.YELLOW)}
           style={{
             ...swatchBaseStyle,
             boxSizing: 'border-box',
@@ -55,7 +55,7 @@ const Swatches = (props: Props) => {
           }}
         />
         <div
-          onClick={() => handleSetColor(ColorsEnum.ORANGE)}
+          onPointerDown={() => handleSetColor(ColorsEnum.ORANGE)}
           style={{
             ...swatchBaseStyle,
             boxSizing: 'border-box',
@@ -65,7 +65,7 @@ const Swatches = (props: Props) => {
           }}
         />
         <div
-          onClick={() => handleSetColor(ColorsEnum.RED)}
+          onPointerDown={() => handleSetColor(ColorsEnum.RED)}
           style={{
             ...swatchBaseStyle,
             boxSizing: 'border-box',
@@ -83,7 +83,7 @@ const Swatches = (props: Props) => {
         }}
       >
         <div
-          onClick={() => handleSetColor(ColorsEnum.PURPLE)}
+          onPointerDown={() => handleSetColor(ColorsEnum.PURPLE)}
           style={{
             ...swatchBaseStyle,
             boxSizing: 'border-box',
@@ -93,7 +93,7 @@ const Swatches = (props: Props) => {
           }}
         />
         <div
-          onClick={() => handleSetColor(ColorsEnum.BLUE)}
+          onPointerDown={() => handleSetColor(ColorsEnum.BLUE)}
           style={{
             ...swatchBaseStyle,
             boxSizing: 'border-box',
@@ -103,7 +103,7 @@ const Swatches = (props: Props) => {
           }}
         />
         <div
-          onClick={() => handleSetColor(ColorsEnum.CYAN)}
+          onPointerDown={() => handleSetColor(ColorsEnum.CYAN)}
           style={{
             ...swatchBaseStyle,
             boxSizing: 'border-box',
@@ -114,7 +114,7 @@ const Swatches = (props: Props) => {
         />
         <div
           className="ab-cursor-bw-element-bg"
-          onClick={() => handleSetColor(ColorsEnum.AUTO)}
+          onPointerDown={() => handleSetColor(ColorsEnum.AUTO)}
           style={{
             ...swatchBaseStyle,
             boxSizing: 'border-box',

@@ -5,31 +5,58 @@ import { ColorsEnum } from './constants/enums'
 // Global flag to track extension context
 let extensionValid = true
 
-// Helper to safely call Chrome APIs
-const safeChromeAPI = async <T>(apiCall: () => Promise<T>): Promise<T | null> => {
+// Helper to safely call Chrome APIs with comprehensive error handling
+const safeChromeAPI = async (apiCall: () => Promise<any>): Promise<any> => {
   if (!extensionValid) {
     console.log('Extension context invalidated, skipping API call')
     return null
   }
   
   try {
+    // Double-check Chrome APIs are available
+    if (!chrome || !chrome.runtime || !chrome.runtime.id) {
+      throw new Error('Chrome runtime not available')
+    }
+    
     return await apiCall()
-  } catch (error) {
-    if (error.message?.includes('Extension context invalidated')) {
+  } catch (error: any) {
+    if (error?.message?.includes('Extension context invalidated') ||
+        error?.message?.includes('message channel closed') ||
+        error?.message?.includes('receiving end does not exist') ||
+        error?.message?.includes('Chrome runtime not available')) {
       console.log('Extension context invalidated')
       extensionValid = false
       return null
     }
+    console.error('Chrome API error:', error)
     throw error
   }
 }
 
+// Helper to validate extension context
+const isContextValid = (): boolean => {
+  try {
+    return extensionValid && 
+           typeof chrome !== 'undefined' && 
+           !!chrome.runtime && 
+           !!chrome.runtime.id && 
+           !!chrome.storage
+  } catch {
+    extensionValid = false
+    return false
+  }
+}
+
 chrome.runtime.onInstalled.addListener(({ reason }) => {
-  safeChromeAPI(() => chrome.storage.local.set({
-    cursorColor: defaultColor,
-    cursorType: defaultCursorType,
-    appActive: false,
-  }))
+  if (!isContextValid()) return
+  
+  safeChromeAPI(async () => {
+    await chrome.storage.local.set({
+      cursorColor: defaultColor,
+      cursorType: defaultCursorType,
+      appActive: false,
+    })
+  })
 })
 
 // Helper function to check if URL is injectable
@@ -52,6 +79,11 @@ const isInjectableUrl = (url: string): boolean => {
 
 // Helper function to safely execute script
 const safeExecuteScript = async (tabId: number, files: string[]) => {
+  if (!isContextValid()) {
+    console.log('Extension context invalid, skipping script execution')
+    return false
+  }
+  
   try {
     // Get tab info first
     const tab = await chrome.tabs.get(tabId)
@@ -66,14 +98,28 @@ const safeExecuteScript = async (tabId: number, files: string[]) => {
       files: files,
     })
     return true
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes('Extension context invalidated') ||
+        error?.message?.includes('message channel closed')) {
+      console.log('Extension context invalidated during script execution')
+      extensionValid = false
+      return false
+    }
     console.log(`Failed to inject script on tab ${tabId}:`, error)
     return false
   }
 }
 
 const updateIcon = async () => {
-  const result = await safeChromeAPI(() => chrome.storage.local.get())
+  if (!isContextValid()) {
+    console.log('Extension context invalid, skipping icon update')
+    return
+  }
+  
+  const result = await safeChromeAPI(async () => {
+    return await chrome.storage.local.get()
+  })
+  
   if (!result || !result.colorScheme) {
     return
   }
@@ -100,38 +146,60 @@ const updateIcon = async () => {
     '16': iconPath,
   }
 
-  await safeChromeAPI(() => chrome.action.setIcon({
-    path: iconPathsObject,
-  }))
+  await safeChromeAPI(async () => {
+    await chrome.action.setIcon({
+      path: iconPathsObject,
+    })
+  })
 }
 
 // Update icon on storage changes instead of continuous polling
 chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (!isContextValid()) return
+  
   if (namespace === 'local' && (changes.appActive || changes.cursorColor || changes.cursorType || changes.colorScheme)) {
     updateIcon()
   }
 })
 
-// Initial icon update
-updateIcon()
-
-// color scheme listener
-chrome.runtime.onMessage.addListener(function (request) {
-  console.log('request chrome.runtime.onMessage', request);
-  if (
-    request.scheme &&
-    (request.scheme === 'dark' || request.scheme === 'light')
-  ) {
-    safeChromeAPI(() => chrome.storage.local.set({
-      colorScheme: request.scheme,
-    }))
+// Initial icon update with delay
+setTimeout(() => {
+  if (isContextValid()) {
+    updateIcon()
   }
+}, 100)
+
+// color scheme listener with better error handling
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (!isContextValid()) {
+    console.log('Extension context invalid, ignoring message')
+    return false
+  }
+  
+  console.log('request chrome.runtime.onMessage', request)
+  
+  if (request.scheme && (request.scheme === 'dark' || request.scheme === 'light')) {
+    safeChromeAPI(async () => {
+      await chrome.storage.local.set({
+        colorScheme: request.scheme,
+      })
+    }).catch(error => {
+      console.error('Error setting color scheme:', error)
+    })
+  }
+  
+  return true // Keep message channel open for async response
 })
 
 // when clicking the action, if the app is not active
 // both the popup and app should be injected
 // and the popup should be shown
 chrome.action.onClicked.addListener(async (tab: any) => {
+  if (!isContextValid()) {
+    console.log('Extension context invalid, ignoring action click')
+    return
+  }
+  
   const tabId = tab.id
   
   if (!tab.url || !isInjectableUrl(tab.url)) {
@@ -140,56 +208,74 @@ chrome.action.onClicked.addListener(async (tab: any) => {
   }
 
   try {
-    const result = await safeChromeAPI(() => chrome.storage.local.get())
+    const result = await safeChromeAPI(async () => {
+      return await chrome.storage.local.get()
+    })
     if (!result) return
     
     console.log('Color setting : value is ' + result)
     
     if (!result.appActive) {
-      await safeChromeAPI(() => chrome.storage.local.set({
-        appActive: true,
-      }))
+      await safeChromeAPI(async () => {
+        await chrome.storage.local.set({
+          appActive: true,
+        })
+      })
     }
     
+    // Use smaller delays and add context validation
     setTimeout(async () => {
-      await safeExecuteScript(tabId, ['./js/wake_event.js'])
-    }, 100)
+      if (isContextValid()) {
+        await safeExecuteScript(tabId, ['./js/wake_event.js'])
+      }
+    }, 50)
     
     setTimeout(async () => {
-      await safeExecuteScript(tabId, ['./js/popup_invoker.js'])
-    }, 300)
+      if (isContextValid()) {
+        await safeExecuteScript(tabId, ['./js/popup_invoker.js'])
+      }
+    }, 150)
   } catch (error) {
     console.error('Error in action click handler:', error)
   }
 })
 
 const ensureMounted = async (tabId: any) => {
+  if (!isContextValid()) {
+    console.log('Extension context invalid, skipping mount')
+    return
+  }
+  
   try {
     await safeExecuteScript(tabId, ['./js/app.js'])
     setTimeout(async () => {
-      await safeExecuteScript(tabId, ['./js/popup.js'])
-    }, 200)
+      if (isContextValid()) {
+        await safeExecuteScript(tabId, ['./js/popup.js'])
+      }
+    }, 100)
   } catch (error) {
     console.error('Error ensuring mounted:', error)
   }
 }
 
 const handleTabPing = async (tabId: number) => {
+  if (!isContextValid()) return
+  
   try {
     const tabs = await chrome.tabs.query({ currentWindow: true, active: true })
     if (tabs && tabs[0] && tabs[0].url && isInjectableUrl(tabs[0].url)) {
       await ensureMounted(tabId)
-      const result = await safeChromeAPI(() => chrome.storage.local.get())
+      const result = await safeChromeAPI(async () => {
+        return await chrome.storage.local.get()
+      })
       if (!result) return
       
       if (!result.appActive) {
         await safeExecuteScript(tabId, ['./js/cleanup.js'])
-      } else {
-        await safeExecuteScript(tabId, ['./js/wake_event.js'])
       }
     }
   } catch (error) {
-    console.error('Error in handleTabPing:', error)
+    console.error('Error handling tab ping:', error)
   }
 }
 

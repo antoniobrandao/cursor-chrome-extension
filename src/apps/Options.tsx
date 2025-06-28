@@ -9,25 +9,58 @@ const Options = () => {
   const [cursorColor, setCursorColor] = useState<ColorsEnum>(ColorsEnum.GREEN)
   const [cursorType, setCursorType] = useState<CursorTypeEnum>(CursorTypeEnum.DOUBLE)
 
-  useSingleEffect(() => {
-    if (!chrome || !chrome.storage) return
-    chrome.storage.local.get().then(result => {
-      console.log('result', result)
-      setCursorType(result.cursorType)
-      setCursorColor(result.cursorColor)
-    })
-  })
-
-  const handleSetColor = (newColor: ColorsEnum) => {
-    setCursorColor(newColor)
-    if (!chrome || !chrome.storage) return
-    chrome.storage.local.set({ cursorColor: newColor })
+  // Helper to safely call Chrome APIs
+  const safeChromeAPI = async (apiCall: () => Promise<any>): Promise<any> => {
+    try {
+      // Check if Chrome APIs are available
+      if (!chrome || !chrome.runtime || !chrome.storage) {
+        console.log('Chrome APIs not available in Options')
+        return null
+      }
+      
+      return await apiCall()
+    } catch (error: any) {
+      if (error?.message?.includes('Extension context invalidated') ||
+          error?.message?.includes('message channel closed') ||
+          error?.message?.includes('receiving end does not exist')) {
+        console.log('Extension context invalidated in Options')
+        return null
+      }
+      console.log('Chrome API error in Options:', error)
+      return null
+    }
   }
 
-  const handleSetCursorType = (newCursorType: CursorTypeEnum) => {
+  useSingleEffect(() => {
+    const loadSettings = async () => {
+      const result = await safeChromeAPI(async () => {
+        return chrome.storage.local.get()
+      })
+      
+      if (result) {
+        console.log('Options loaded settings:', result)
+        setCursorType(result.cursorType)
+        setCursorColor(result.cursorColor)
+      }
+    }
+    
+    loadSettings()
+  })
+
+  const handleSetColor = async (newColor: ColorsEnum) => {
+    setCursorColor(newColor)
+    
+    await safeChromeAPI(async () => {
+      return chrome.storage.local.set({ cursorColor: newColor })
+    })
+  }
+
+  const handleSetCursorType = async (newCursorType: CursorTypeEnum) => {
     setCursorType(newCursorType)
-    if (!chrome || !chrome.storage) return
-    chrome.storage.local.set({ cursorType: newCursorType })
+    
+    await safeChromeAPI(async () => {
+      return chrome.storage.local.set({ cursorType: newCursorType })
+    })
   }
 
   const swatchBaseStyle = 'block w-[38px] h-[38px] rounded-full cursor-pointer'

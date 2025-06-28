@@ -1,5 +1,4 @@
-import React, { useState, useRef } from 'react'
-import { useSingleEffect } from 'react-haiku'
+import React, { useEffect, useState, useRef } from 'react'
 import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
 import '../styles/animations.css'
 
@@ -20,6 +19,38 @@ const App = () => {
   const pointClickElementRef = useRef(null)
   const pointClickElementRefA = useRef(null)
   const pointClickElementRadius = 58
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Global flag to track extension context
+  const [extensionValid, setExtensionValid] = useState(true)
+
+  // Helper to safely call Chrome APIs with comprehensive error handling
+  const safeChromeAPI = async (apiCall: () => Promise<any>): Promise<any> => {
+    if (!extensionValid) {
+      console.log('Extension context invalidated, skipping API call in App')
+      return null
+    }
+    
+    try {
+      // Check if Chrome APIs are available
+      if (!chrome || !chrome.runtime || !chrome.storage) {
+        console.log('Chrome APIs not available in App')
+        return null
+      }
+      
+      return await apiCall()
+    } catch (error: any) {
+      if (error?.message?.includes('Extension context invalidated') ||
+          error?.message?.includes('message channel closed') ||
+          error?.message?.includes('receiving end does not exist')) {
+        console.log('Extension context invalidated in App')
+        setExtensionValid(false)
+        return null
+      }
+      console.log('Chrome API error in App:', error)
+      return null
+    }
+  }
 
   const handleMouseMove = (e: MouseEvent) => {
     setMouseX(e.clientX)
@@ -51,80 +82,160 @@ const App = () => {
   const handleMouseUp = (e: MouseEvent) => {
     setMouseDown(false)
   }
-  const handleTogglePower = (e: CustomEvent) => {
-    chrome.storage.local.get().then(result => {
+  const handleTogglePower = async (e: Event) => {
+    const result = await safeChromeAPI(async () => {
+      return chrome.storage.local.get()
+    })
+    if (result) {
       console.log('handleTogglePower chrome.storage.local.get() : result', result)
       setAppActive(result.appActive)
-    })
+    }
   }
   
   const handleCloseAppEvent = (e: Event) => {
     setAppActive(false)
   }
 
-  const handleWakeEvent = (e: Event) => {
-    chrome.storage.local.get().then(result => {
+  const handleWakeEvent = async (e: Event) => {
+    const result = await safeChromeAPI(async () => {
+      return chrome.storage.local.get()
+    })
+    if (result) {
       console.log('handleWakeEvent chrome.storage.local.get() : result', result)
       setAppActive(result.appActive)
-    })
+    }
   }
 
-  const handleRequestSettingsUpdate = () => {
-    chrome.storage.local.get().then(result => {
+  const handleRequestSettingsUpdate = async () => {
+    const result = await safeChromeAPI(async () => {
+      return chrome.storage.local.get()
+    })
+    if (result) {
       console.log('chrome.storage.local.get() : result', result)
       setCursorType(result.cursorType)
       setCursorColor(result.cursorColor)
-    })
+    }
   }
 
-  const checkStorageSettings = () => {
-    chrome.storage.local.get().then(result => {
+  const checkStorageSettings = async () => {
+    if (!extensionValid) {
+      console.log('Extension context invalid, skipping storage check')
+      return
+    }
+    
+    const result = await safeChromeAPI(async () => {
+      return chrome.storage.local.get()
+    })
+    if (result) {
       console.log('checkStorageSettings timeout : result', result)
       setAppActive(result.appActive)
       setCursorType(result.cursorType)
       setCursorColor(result.cursorColor)
-    })
+    }
   }
 
-  useSingleEffect(() => {
+  useEffect(() => {
     console.log('CURSOR APP  - useEffect')
 
-    setInterval(checkStorageSettings, 1000)
+    // Storage change listener with proper error handling
+    const handleStorageChange = (changes: any, namespace: string) => {
+      if (!extensionValid) return
+      
+      if (namespace === 'local') {
+        if (changes.appActive) setAppActive(changes.appActive.newValue)
+        if (changes.cursorType) setCursorType(changes.cursorType.newValue)
+        if (changes.cursorColor) setCursorColor(changes.cursorColor.newValue)
+      }
+    }
+
+    // Set up chrome storage listener if available and context is valid
+    let storageListenerAdded = false
+    if (extensionValid && chrome?.storage?.onChanged) {
+      try {
+        chrome.storage.onChanged.addListener(handleStorageChange)
+        storageListenerAdded = true
+      } catch (error) {
+        console.log('Failed to add storage listener:', error)
+        setExtensionValid(false)
+      }
+    }
+
+    // Fallback interval with much lower frequency and proper cleanup
+    intervalRef.current = setInterval(checkStorageSettings, 5000) // Reduced from 1000ms to 5000ms
+    
     handleRequestSettingsUpdate()
     setMouseX(window.innerWidth / 2)
     setMouseY(window.innerHeight / 2)
+    
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mousedown', handleMouseDown)
     window.addEventListener('mouseup', handleMouseUp)
     window.addEventListener('closeCursorAppEvent', handleCloseAppEvent, false)
-    // @ts-ignore
     window.addEventListener(
       'requestCursorSettingsUpdate',
       handleRequestSettingsUpdate,
       false,
     )
-    // @ts-ignore
-    window.addEventListener('togglePowerButton', handleTogglePower, false)
-    // @ts-ignore
+    window.addEventListener('togglePowerButton', handleTogglePower as EventListener, false)
     window.addEventListener('cursorAppWakeEvent', handleWakeEvent, false)
 
-    chrome.storage.local.get().then(result => {
-      console.log('CURSOR APP onStart - STORAGE: cursorType', result.cursorType)
-      console.log(
-        'CURSOR APP onStart - STORAGE: cursorColor',
-        result.cursorColor,
-      )
-      console.log('CURSOR APP onStart - STORAGE: appActive', result.appActive)
-      setCursorType(result.cursorType)
-      setCursorColor(result.cursorColor)
-      setAppActive(result.appActive)
+    // Initial settings load
+    safeChromeAPI(async () => {
+      return chrome.storage.local.get()
+    }).then(result => {
+      if (result) {
+        console.log('CURSOR APP onStart - STORAGE: cursorType', result.cursorType)
+        console.log(
+          'CURSOR APP onStart - STORAGE: cursorColor',
+          result.cursorColor,
+        )
+        console.log('CURSOR APP onStart - STORAGE: appActive', result.appActive)
+        setCursorType(result.cursorType)
+        setCursorColor(result.cursorColor)
+        setAppActive(result.appActive)
+      }
+    }).catch(error => {
+      console.log('Error loading initial settings:', error)
     })
-  })
+
+    // Cleanup function
+    return () => {
+      console.log('CURSOR APP - Cleanup')
+      
+      // Clear interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      
+      // Remove storage listener with error handling
+      if (storageListenerAdded && chrome?.storage?.onChanged) {
+        try {
+          chrome.storage.onChanged.removeListener(handleStorageChange)
+        } catch (error) {
+          console.log('Error removing storage listener:', error)
+        }
+      }
+      
+      // Remove event listeners
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mousedown', handleMouseDown)
+      window.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener('closeCursorAppEvent', handleCloseAppEvent)
+      window.removeEventListener(
+        'requestCursorSettingsUpdate',
+        handleRequestSettingsUpdate
+      )
+      window.removeEventListener('togglePowerButton', handleTogglePower as EventListener)
+      window.removeEventListener('cursorAppWakeEvent', handleWakeEvent)
+    }
+  }, [extensionValid]) // Add extensionValid as dependency
 
   const commonValues = {
     pointerEvents: 'none',
     position: 'fixed',
-    zIndex: 999999999,
+    // zIndex: 999999999,
+    zIndex: 2147483647,
     borderRadius: '50%',
     transform: mouseDown ? 'scale(0.75)' : 'scale(1)',
     // transform: 'scale(1)',
@@ -152,6 +263,7 @@ const App = () => {
     left: '0',
     position: 'absolute',
     boxSizing: 'border-box',
+    
   }
 
   const stylesSingle = {

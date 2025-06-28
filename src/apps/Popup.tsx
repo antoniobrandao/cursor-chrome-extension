@@ -17,6 +17,29 @@ const Popup = () => {
   )
 
   const wrapperRef = useRef(null)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Helper to safely call Chrome APIs
+  const safeChromeAPI = async (apiCall: () => Promise<any>): Promise<any> => {
+    try {
+      // Check if Chrome APIs are available
+      if (!chrome || !chrome.runtime || !chrome.storage) {
+        console.log('Chrome APIs not available in Popup')
+        return null
+      }
+      
+      return await apiCall()
+    } catch (error: any) {
+      if (error?.message?.includes('Extension context invalidated') ||
+          error?.message?.includes('message channel closed') ||
+          error?.message?.includes('receiving end does not exist')) {
+        console.log('Extension context invalidated in Popup')
+        return null
+      }
+      console.log('Chrome API error in Popup:', error)
+      return null
+    }
+  }
 
   const handleClickOutside = (event: any) => {
     // @ts-ignore
@@ -29,19 +52,41 @@ const Popup = () => {
     setYPosition(2)
   }
 
-  const checkStorageSettings = () => {
-    chrome.storage.local.get().then(result => {
-      console.log('checkStorageSettings timeout : result', result)
+  const checkStorageSettings = async () => {
+    const result = await safeChromeAPI(async () => {
+      return chrome.storage.local.get()
+    })
+    
+    if (result) {
+      console.log('checkStorageSettings result:', result)
       setAppActive(result.appActive)
       setCursorType(result.cursorType)
       setCursorColor(result.cursorColor)
-    })
+    }
   }
 
   useEffect(() => {
     if (!initialised) {
-      setInterval(checkStorageSettings, 1000)
-      console.log('INITIALISING')
+      // Use storage change listener instead of polling
+      const handleStorageChange = (changes: any, namespace: string) => {
+        if (namespace === 'local') {
+          if (changes.appActive) setAppActive(changes.appActive.newValue)
+          if (changes.cursorType) setCursorType(changes.cursorType.newValue)
+          if (changes.cursorColor) setCursorColor(changes.cursorColor.newValue)
+        }
+      }
+
+      // Set up chrome storage listener if available
+      if (chrome?.storage?.onChanged) {
+        chrome.storage.onChanged.addListener(handleStorageChange)
+      }
+
+      // Fallback polling with much lower frequency and error handling
+      intervalRef.current = setInterval(async () => {
+        await checkStorageSettings()
+      }, 5000) // Reduced from 1000ms to 5000ms
+      
+      console.log('INITIALISING Popup')
       // @ts-ignore
       window.addEventListener(
         'reInvokeCursorPopup',
@@ -51,49 +96,98 @@ const Popup = () => {
       document.addEventListener('mousedown', handleClickOutside)
       setInitialised(true)
     }
-    if (chrome && chrome.storage) {
-      chrome.storage.local.get().then(result => {
+    
+    // Initial settings load
+    const loadInitialSettings = async () => {
+      const result = await safeChromeAPI(async () => {
+        return chrome.storage.local.get()
+      })
+      
+      if (result) {
         setCursorType(result.cursorType)
         setCursorColor(result.cursorColor)
         setAppActive(result.appActive)
-      })
-    } else {
-      setCursorType(defaultCursorType)
-      setCursorColor(defaultColor)
-      setAppActive(appActive)
+      } else {
+        // Fallback to defaults if Chrome APIs aren't available
+        setCursorType(defaultCursorType)
+        setCursorColor(defaultColor)
+        setAppActive(appActive)
+      }
+    }
+    
+    loadInitialSettings()
+
+    // Cleanup function
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      
+      // Remove storage listener
+      if (chrome?.storage?.onChanged) {
+        const handleStorageChange = (changes: any, namespace: string) => {
+          if (namespace === 'local') {
+            if (changes.appActive) setAppActive(changes.appActive.newValue)
+            if (changes.cursorType) setCursorType(changes.cursorType.newValue)
+            if (changes.cursorColor) setCursorColor(changes.cursorColor.newValue)
+          }
+        }
+        chrome.storage.onChanged.removeListener(handleStorageChange)
+      }
     }
   }, [wrapperRef])
 
-  const handleSetColor = (newColor: ColorsEnum) => {
+  const handleSetColor = async (newColor: ColorsEnum) => {
     setCursorColor(newColor)
-    if (!chrome || !chrome.storage) return
-    chrome.storage.local.set({ cursorColor: newColor }).then(() => {
-      window.dispatchEvent(new Event('requestCursorSettingsUpdate'))
+    
+    const result = await safeChromeAPI(async () => {
+      return chrome.storage.local.set({ cursorColor: newColor })
     })
+    
+    if (result !== null) {
+      window.dispatchEvent(new Event('requestCursorSettingsUpdate'))
+    }
   }
 
-  const handleSetCursorType = (newCursorType: CursorTypeEnum) => {
+  const handleSetCursorType = async (newCursorType: CursorTypeEnum) => {
     setCursorType(newCursorType)
-    if (!chrome || !chrome.storage) return
-    chrome.storage.local.set({ cursorType: newCursorType }).then(() => {
-      window.dispatchEvent(new Event('requestCursorSettingsUpdate'))
+    
+    const result = await safeChromeAPI(async () => {
+      return chrome.storage.local.set({ cursorType: newCursorType })
     })
+    
+    if (result !== null) {
+      window.dispatchEvent(new Event('requestCursorSettingsUpdate'))
+    }
   }
 
-  const handleToggleAppActive = () => {
-    chrome.storage.local.get().then(result => {
-      if (result.appActive) {
-        chrome.storage.local.set({ appActive: false }).then(() => {
-          setAppActive(false)
-          window.dispatchEvent(new CustomEvent('togglePowerButton'))
-        })
-      } else {
-        chrome.storage.local.set({ appActive: true }).then(() => {
-          setAppActive(true)
-          window.dispatchEvent(new CustomEvent('togglePowerButton'))
-        })
-      }
+  const handleToggleAppActive = async () => {
+    const currentState = await safeChromeAPI(async () => {
+      return chrome.storage.local.get()
     })
+    
+    if (!currentState) return
+    
+    if (currentState.appActive) {
+      const result = await safeChromeAPI(async () => {
+        return chrome.storage.local.set({ appActive: false })
+      })
+      
+      if (result !== null) {
+        setAppActive(false)
+        window.dispatchEvent(new CustomEvent('togglePowerButton'))
+      }
+    } else {
+      const result = await safeChromeAPI(async () => {
+        return chrome.storage.local.set({ appActive: true })
+      })
+      
+      if (result !== null) {
+        setAppActive(true)
+        window.dispatchEvent(new CustomEvent('togglePowerButton'))
+      }
+    }
   }
 
   const divider = (
@@ -107,7 +201,8 @@ const Popup = () => {
   return (
     <div
       style={{
-        zIndex: 9999999999,
+        // zIndex: 9999999999,
+        zIndex: 2147483646,
         display: 'flex',
         justifyContent: 'flex-end',
         boxSizing: 'border-box',
@@ -119,7 +214,7 @@ const Popup = () => {
       }}
     >
       <div
-        className='!border-2 !border-red-500 ab-cursor-popup-bg'
+        className=' ab-cursor-popup-bg'
         ref={wrapperRef}
         style={{
           boxSizing: 'border-box',
@@ -130,13 +225,14 @@ const Popup = () => {
           display: 'flex',
           flexDirection: 'column',
           marginRight: '120px',
-          height: '60px',
+          height: '56px',
           boxShadow:
             '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
           paddingTop: '10px',
           paddingRight: '18px',
           paddingLeft: '10px',
           paddingBottom: '10px',
+          backgroundColor: '#222',
         }}
       >
         <div
@@ -191,7 +287,7 @@ const PowerIcon = (props: PowerIconProps) => {
       width="18"
       height="18"
       fill="none"
-      onClick={onClick}
+      onPointerDown={onClick}
       style={style}
       viewBox="0 0 18 18"
       className={
