@@ -11,6 +11,7 @@ const CursorTypes = (props: Props) => {
   const { handleSetCursorType, cursorColor, cursorType } = props
   return (
     <div
+      className='!border-2 !border-red-500'
       style={{
         boxSizing: 'border-box',
         display: 'flex',

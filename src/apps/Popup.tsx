@@ -5,6 +5,7 @@ import { defaultColor, defaultCursorType } from '../constants/defaults'
 import Swatches from './components/Swatches'
 import CursorTypes from './components/CursorTypes'
 import '../styles/popup.css'
+import '../styles/tailwind.css'
 
 const Popup = () => {
   const [yPosition, setYPosition] = useState<number>(-100)
@@ -118,7 +119,7 @@ const Popup = () => {
       }}
     >
       <div
-        className="ab-cursor-popup-bg"
+        className='!border-2 !border-red-500 ab-cursor-popup-bg'
         ref={wrapperRef}
         style={{
           boxSizing: 'border-box',
@@ -132,13 +133,10 @@ const Popup = () => {
           height: '60px',
           boxShadow:
             '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-          borderWidth: '2px',
-          borderStyle: 'solid',
           paddingTop: '10px',
           paddingRight: '18px',
           paddingLeft: '10px',
           paddingBottom: '10px',
-          borderColor: colorToUseTCTransparent.toRgbString(),
         }}
       >
         <div
