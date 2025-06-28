@@ -1,21 +1,22 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import clsx from 'clsx'
 import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
 import { getColorName, getModeName } from '../helpers'
 import '../styles/tailwind.css'
+import { useSingleEffect } from 'react-haiku'
 
 const Options = () => {
   const [cursorColor, setCursorColor] = useState<ColorsEnum>(ColorsEnum.GREEN)
   const [cursorType, setCursorType] = useState<CursorTypeEnum>(CursorTypeEnum.DOUBLE)
 
-  useEffect(() => {
+  useSingleEffect(() => {
     if (!chrome || !chrome.storage) return
     chrome.storage.local.get().then(result => {
       console.log('result', result)
       setCursorType(result.cursorType)
       setCursorColor(result.cursorColor)
     })
-  }, [])
+  })
 
   const handleSetColor = (newColor: ColorsEnum) => {
     setCursorColor(newColor)

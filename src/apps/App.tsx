@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useState, useRef } from 'react'
+import { useSingleEffect } from 'react-haiku'
 import { ColorsEnum, CursorTypeEnum } from '../constants/enums'
 import '../styles/animations.css'
 
@@ -85,7 +86,7 @@ const App = () => {
     })
   }
 
-  useEffect(() => {
+  useSingleEffect(() => {
     console.log('CURSOR APP  - useEffect')
 
     setInterval(checkStorageSettings, 1000)
@@ -118,7 +119,7 @@ const App = () => {
       setCursorColor(result.cursorColor)
       setAppActive(result.appActive)
     })
-  }, [])
+  })
 
   const commonValues = {
     pointerEvents: 'none',

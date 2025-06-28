@@ -11,12 +11,13 @@
     "default_icon": "icons/icon-double-off-light.png",
     "default_title": "Cursor Highlight Pro"
   },
-  "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["http://*/*", "https://*/*"],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["js/toggle_icon.js"]
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["js/toggle_icon.js"],
+      "run_at": "document_start"
     }
   ]
 }
