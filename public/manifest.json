@@ -9,7 +9,7 @@
   "options_page": "options.html",
   "action": {
     "default_icon": "icons/icon-double-off-light.png",
-    "default_title": "Cursor Highlight Pro"
+    "default_title": "Mouse Highlight Pro"
   },
   "permissions": ["storage", "scripting"],
   "host_permissions": ["http://*/*", "https://*/*"],
